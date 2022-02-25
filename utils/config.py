@@ -22,5 +22,6 @@ BEV_WIDTH = 1152 # Width of the bird's eye view image
 BEV_HEIGHT = 1152 # Height of the bird's eye view image
 
 REMOVE_GROUND = False
+GROUND_THRESHOLD= -1.5
 
 colors = [[0, 255, 255], [0, 0, 255], [255, 0, 0]]
