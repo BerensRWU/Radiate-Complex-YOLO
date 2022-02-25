@@ -15,12 +15,12 @@ CLASS_NAME_TO_ID = {
             'bicycle':   			5,
             'pedestrian':		    6,
             'group of pedestrian': 	7,
-            
             }
 
 
-BEV_WIDTH = 1152 # across y axis -25m ~ 25m
-BEV_HEIGHT = 1152 # across x axis 0m ~ 50m
+BEV_WIDTH = 1152 # Width of the bird's eye view image
+BEV_HEIGHT = 1152 # Height of the bird's eye view image
+
+REMOVE_GROUND = False
 
 colors = [[0, 255, 255], [0, 0, 255], [255, 0, 0]]
-
