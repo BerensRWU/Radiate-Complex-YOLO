@@ -29,8 +29,9 @@ if __name__ == "__main__":
     print(opt)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
+
     sensor = "radar" if opt.radar else "lidar"
+
     # Set up model
     model = Darknet(opt.model_def, img_size=opt.img_size).to(device)
     # Load checkpoint weights
