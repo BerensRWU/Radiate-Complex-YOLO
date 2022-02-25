@@ -1,12 +1,12 @@
+# Radar calibration parameters
+radar_calib:
+    T: [0., 0., 0.]
+    R: [0., 0., 0.]
+    
 # Lidar calibration parameters
 lidar_calib:
     T: [0.6003, -0.120102, 0.250012]
     R: [0.0001655, 0.000213, 0.000934]
-    
-# Radar calibration parameters
-lidar_calib:
-    T: [0., 0., 0.]
-    R: [0., 0., 0.]
 
 
 # Left camera calibration parameters
