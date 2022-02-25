@@ -16,11 +16,11 @@ def resize(image, size):
 
 class RadiateYOLODataset(RadiateDataset):
 
-    def __init__(self, root_dir, split='train', mode ='TRAIN', data_aug=True, multiscale=False,radar = False, weather = "all"):
+    def __init__(self, root_dir, split='train', mode ='TRAIN', data_aug=True, multiscale=False,radar = False, weather = "good"):
         super().__init__(root_dir=root_dir, split=split)
         
         self.weather = weather
-        self.split = split
+        self.split_dir = f"split/{split}_{self.weather}_weather/"
         self.multiscale = multiscale
         self.data_aug = data_aug # TODO
         self.img_size = cnf.BEV_WIDTH
@@ -36,7 +36,7 @@ class RadiateYOLODataset(RadiateDataset):
         self.sample_dir_list = []
         self.sample_idx_list_annot = []
          
-        self.scenes = self.filter_scenes(os.listdir(self.root_dir), self.weather)
+        self.scenes = os.listdir(self.split_dir)
         
         if mode == 'TRAIN':
             self.preprocess_yolo_training_data()
@@ -44,28 +44,13 @@ class RadiateYOLODataset(RadiateDataset):
             for scene in self.scenes:
                 
                 if self.radar:
-                    self.sample_dir_list += [f"{self.root_dir}/{scene}/Navtech_Cartesian/{int(sample_id):06d}.png" for sample_id in np.loadtxt(f"split/{scene}/test_split_radar.txt")]
-                    self.sample_idx_list_annot += [(scene, int(sample_id) - 1)  for sample_id in np.loadtxt(f"split/{scene}/test_split_radar.txt")]
+                    self.sample_dir_list += [f"{self.root_dir}/{scene}/Navtech_Cartesian/{int(sample_id):06d}.png" for sample_id in np.loadtxt(f"{self.split_dir}/{scene}/test_split_radar.txt")]
+                    self.sample_idx_list_annot += [(scene, int(sample_id) - 1)  for sample_id in np.loadtxt(f"{self.split_dir}/{scene}/test_split_radar.txt")]
                 else:
-                    self.sample_dir_list += [f"{self.root_dir}/{scene}/velo_lidar/{int(sample_id):06d}.csv" for sample_id in np.loadtxt(f"split/{scene}/test_split_lidar.txt")]
-                    self.sample_idx_list_annot += [(scene, int(sample_id) - 1) for sample_id in np.loadtxt(f"split/{scene}/test_split_radar.txt")]
+                    self.sample_dir_list += [f"{self.root_dir}/{scene}/velo_lidar/{int(sample_id):06d}.csv" for sample_id in np.loadtxt(f"{self.split_dir}/{scene}/test_split_lidar.txt")]
+                    self.sample_idx_list_annot += [(scene, int(sample_id) - 1) for sample_id in np.loadtxt(f"{self.split_dir}/{scene}/test_split_radar.txt")]
         print(f"Load {mode} samples from {self.root_dir}")
         print(f"Done: total {mode} samples {len(self.sample_dir_list)}")
-    
-    @staticmethod
-    def filter_scenes(scenes_all, condition):
-        cond2scene_dic = {"all": ["city", "junction", "motorway", "night", "rural", "rain", "fog", "snow"],
-                      "good": ["city", "junction", "motorway", "night", "rural"],
-                      "bad": ["rain", "fog", "snow"],
-                      "rain": ["rain"] }
-        scenes_conditions =  cond2scene_dic[condition]
-        scenes_filtered = []
-        
-        for scene in scenes_all:
-            for s_c in scenes_conditions:
-                if s_c in scene:
-                    scenes_filtered.append(scene)
-        return scenes_filtered
     
     def preprocess_yolo_training_data(self):
         """
@@ -76,11 +61,11 @@ class RadiateYOLODataset(RadiateDataset):
         sample_idx_list_annot = []
         for scene in self.scenes:
             if self.radar:
-                sample_dir_list += [f"{self.root_dir}/{scene}/Navtech_Cartesian/{int(sample_id):06d}.png" for sample_id in np.loadtxt(f"split/{scene}/train_split_radar.txt")]
-                sample_idx_list_annot += [(scene, int(sample_id) - 1) for sample_id in np.loadtxt(f"split/{scene}/train_split_radar.txt")]
+                sample_dir_list += [f"{self.root_dir}/{scene}/Navtech_Cartesian/{int(sample_id):06d}.png" for sample_id in np.loadtxt(f"{self.split_dir}/{scene}/train_split_radar.txt")]
+                sample_idx_list_annot += [(scene, int(sample_id) - 1) for sample_id in np.loadtxt(f"{self.split_dir}/{scene}/train_split_radar.txt")]
             else:
-                sample_dir_list += [f"{self.root_dir}/{scene}/velo_lidar/{int(sample_id):06d}.csv" for sample_id in np.loadtxt(f"split/{scene}/train_split_lidar.txt")]
-                sample_idx_list_annot += [(scene, int(sample_id) - 1) for sample_id in np.loadtxt(f"split/{scene}/train_split_radar.txt")]
+                sample_dir_list += [f"{self.root_dir}/{scene}/velo_lidar/{int(sample_id):06d}.csv" for sample_id in np.loadtxt(f"{self.split_dir}/{scene}/train_split_lidar.txt")]
+                sample_idx_list_annot += [(scene, int(sample_id) - 1) for sample_id in np.loadtxt(f"{self.split_dir}/{scene}/train_split_radar.txt")]
         
 
         for idx in range(len(sample_dir_list)):
@@ -101,7 +86,6 @@ class RadiateYOLODataset(RadiateDataset):
     def __getitem__(self, index):
         sample_dir = self.sample_dir_list[index]
         sample_annot = self.sample_idx_list_annot[index]
-
         if self.mode in ["TRAIN", "EVAL"]:
                 
             objects = self.get_label(sample_annot)   
@@ -111,7 +95,7 @@ class RadiateYOLODataset(RadiateDataset):
             else:
                 calib = self.get_calib()
                 gray_map = self.get_lidar(sample_dir, calib)
-            gray_map = cv2.cvtColor(gray_map, cv2.COLOR_BGR2GRAY)
+            gray_map = cv2.cvtColor(gray_map, cv2.COLOR_BGR2GRAY).T
             gray_map = gray_map.reshape(1,gray_map.shape[0],gray_map.shape[1])
             labels, noObjectLabels = bev_utils.read_labels_for_bevbox(objects)
 
