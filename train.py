@@ -24,10 +24,10 @@ if __name__ == "__main__":
     parser.add_argument("--pretrained_weights", type = str, help = "if specified starts from checkpoint model")
     parser.add_argument("--n_cpu", type = int, default = 8, help = "number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type = int, default = cnf.BEV_WIDTH, help = "size of each image dimension")
-    parser.add_argument("--evaluation_interval", type = int, default = 10, help = "interval evaluations on validation set")
+    parser.add_argument("--save_interval", type = int, default = 10, help = "interval to save the weights")
     parser.add_argument("--multiscale_training" ,default = True, type = int, help = "allow for multi-scale training")
     parser.add_argument("--radar", default = False, action = 'store_true' , help = "Use Radar Data")
-    parser.add_argument("--weather", default = "all", type = str, help = "Choose weather conditions: all (default), good, bad(rain,fog,snow), rain")
+    parser.add_argument("--weather", default = "good", type = str, help = "Choose weather conditions: good(default), good_and_bad, bad")
     opt = parser.parse_args()
     print(opt)
     
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
             model.seen += imgs.size(0)
         
-        if epoch % opt.evaluation_interval == 0:
+        if epoch % opt.save_interval == 0:
             torch.save(model.state_dict(), f"checkpoints_{sensor}_{opt.weather}/yolov3_ckpt_epoch-{epoch}.pth")
             
         
