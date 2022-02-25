@@ -16,9 +16,9 @@ class Object3d(object):
         self.ry = obj["bboxes"][idx]["rotation"] # yaw angle (around Y-axis in camera coordinates) [-pi..pi]
         self.ry = np.deg2rad(-self.ry)
         # extract 3d bounding box information
-        self.w = obj["bboxes"][idx]["position"][2] # box width
-        self.h = obj["bboxes"][idx]["position"][3] # box length (in meters)
-        self.t = (obj["bboxes"][idx]["position"][0],obj["bboxes"][idx]["position"][1]) # location (x,y,z) in camera coord.
+        self.w = obj["bboxes"][idx]["position"][2] * cnf.BEV_WIDTH/1152. # box width (in pixel)
+        self.h = obj["bboxes"][idx]["position"][3] * cnf.BEV_HEIGHT/1152. # box length (in pixel)
+        self.t = (obj["bboxes"][idx]["position"][0] * cnf.BEV_WIDTH/1152.,obj["bboxes"][idx]["position"][1] * cnf.BEV_HEIGHT/1152.) # location (x,y,z) in image coord.
         #self.dis_to_cam = np.linalg.norm(self.t)
         self.score = -1
             
@@ -38,13 +38,6 @@ class Object3d(object):
         print('2d bbox location, ry: (%f, %f), %f' % \
             (self.t[0],self.t[1],self.ry))
     
-    def to_kitti_format(self):
-        kitti_str = '%s %.2f %d %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f' \
-                    % (self.type, -1, int(self.occlusion), -1, -1, -1,
-                       -1, -1, self.h, self.w, self.l, self.t[0], self.t[1], self.t[2],
-                       self.ry, self.score)
-        return kitti_str
-
 def read_label(root, scene, idx):
     with open(os.path.join(root, scene, "annotations/annotations.json")) as json_file:
         data = json.load(json_file)
@@ -80,14 +73,14 @@ def lidar_to_image(lidar, calib):
         """
         lidar[:,0:3] = lidar2radar(lidar[:,0:3], calib)
 
-        image = np.zeros((1152, 1152, 3))
-        h_width = 1152/2.0
-        h_height = 1152/2.0
-        cell_res_x = 100.0/h_width
-        cell_res_y = 100.0/h_height
+        image = np.zeros((cnf.BEV_WIDTH, cnf.BEV_HEIGHT, 3))
+        h_width = cnf.BEV_WIDTH / 2.0
+        h_height = cnf.BEV_HEIGHT / 2.0
+        cell_res_x = 100.0 / h_width
+        cell_res_y = 100.0 / h_height
         for i in range(lidar.shape[0]):
-            if False: # Remove Ground
-                if lidar[i, 2] > - 1.5: # Ground Threshold
+            if cnf.REMOVE_GROUND: # Remove Ground
+                if lidar[i, 2] > cnf.GROUND_THRESHOLD: # Ground Threshold
                     image = __inner_lidar_bev_image(
                         lidar, image, i, cell_res_x, cell_res_y, h_width, h_height)
             else:
@@ -111,4 +104,3 @@ def __inner_lidar_bev_image(lidar,
             c = int(xyzi[3])
         image = cv2.circle(image, (int(x), int(y)), 1, (c, c, c))
         return image
-
