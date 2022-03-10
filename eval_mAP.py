@@ -16,6 +16,7 @@ from utils.radiate_yolo_dataset import RadiateYOLODataset
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 def evaluate(model, iou_thres, conf_thres, nms_thres, img_size, batch_size, weather, device):
     model.eval()
 
@@ -33,7 +34,7 @@ def evaluate(model, iou_thres, conf_thres, nms_thres, img_size, batch_size, weat
     for batch_i, (imgs, targets) in enumerate(tqdm.tqdm(dataloader, desc="Detecting objects")):
         # Extract labels
         labels += targets[:, 1].tolist()
-        
+
         # Rescale target
         targets[:, 2:] *= img_size
 
@@ -42,10 +43,9 @@ def evaluate(model, iou_thres, conf_thres, nms_thres, img_size, batch_size, weat
         with torch.no_grad():
             outputs = model(imgs)
             outputs = non_max_suppression_rotated_bbox(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
-        
+
         sample_metrics += get_batch_statistics_rotated_bbox(outputs, targets, iou_threshold=iou_thres)
-        
-    
+
     # Concatenate sample statistics
     true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*sample_metrics))]
     precision, recall, AP, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     print(opt)
 
     sensor = "radar" if opt.radar else "lidar"
-    
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     AP_list = []
@@ -101,5 +101,3 @@ if __name__ == "__main__":
         plt.ylabel("AP")
         plt.title(f"{sensor} Data Radiate")
         plt.savefig(f"{sensor}_{opt.weather}.png")
-    
-    
