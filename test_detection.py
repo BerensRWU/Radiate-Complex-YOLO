@@ -43,8 +43,10 @@ if __name__ == "__main__":
     data_loader = torch_data.DataLoader(dataset, 1, shuffle=False)
 
     Tensor = torch.cuda.FloatTensor if device.type == "cuda" else torch.FloatTensor
-    #Tensor = torch.FloatTensor
-
+    
+    if not os.path.exists(f"output_{sensor}"):
+        os.makedirs(f"output_{sensor}")
+    
     start_time = time.time()                        
     for index, (bev_maps, targets) in enumerate(data_loader):
         targets = targets[0]
@@ -71,7 +73,7 @@ if __name__ == "__main__":
         for _,cls,x,y,w,l,im,re in targets:
             yaw = np.arctan2(im,re)
             bev_utils.drawRotatedBox(bev_maps, x, y, w, l, yaw, [0, 255, 0])
-        print(img_detections[0].shape, index)
+        
         for detections in img_detections:
             if detections is None:
                 continue
